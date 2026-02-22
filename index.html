@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Live Range Scraper — Real-time SMS data capture Chrome extension for ivasms.com. Instant capture, advanced search, export to JSON. Free download." />
+  <title>Live Range Scraper — Real-Time SMS Capture Extension</title>
+  <link rel="icon" href="icons/icon48.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+
+<!-- Scanlines & Canvas -->
+<div class="scanlines" aria-hidden="true"></div>
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+<!-- ── NAV ──────────────────────────────────────────────── -->
+<nav id="nav" aria-label="Main navigation">
+  <a href="#" class="nav-logo">
+    <img src="icons/icon48.png" alt="Live Range Scraper icon" />
+    Live<span>Range</span>Scraper
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How it Works</a>
+    <a href="#install">Install</a>
+  </div>
+  <a href="live-range-scraper.zip" download class="nav-dl">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Free Download
+  </a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  HERO                                                 -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="hero-bg-grid" aria-hidden="true"></div>
+<div class="hero-glow" aria-hidden="true"></div>
+
+<div class="hero">
+
+  <!-- Left: Copy -->
+  <div class="hero-left">
+    <div class="hero-tag">
+      <span class="tag-dot"></span>
+      Chrome Extension · v1.2.0
+    </div>
+
+    <h1 class="hero-title">
+      <span>LIVE</span>
+      <span class="hl">RANGE</span>
+      <span class="dim">SCRAPER</span>
+    </h1>
+
+    <p class="hero-sub">
+      Real-time SMS data capture from the ivasms.com portal.
+      Instant interception via Fetch &amp; XHR hooks, zero-delay MutationObserver,
+      advanced regex search — all stored privately in your browser.
+    </p>
+
+    <div class="hero-actions">
+      <a href="live-range-scraper.zip" download class="btn-dl">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Free
+      </a>
+      <a href="#install" class="btn-guide">
+        Install Guide →
+      </a>
+    </div>
+
+    <div class="hero-badges">
+      <span class="badge badge-green">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/></svg>
+        Zero Delay Capture
+      </span>
+      <span class="badge badge-orange">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/></svg>
+        Local Storage Only
+      </span>
+      <span class="badge badge-gray">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/></svg>
+        10,000 Msg Capacity
+      </span>
+      <span class="badge badge-gray">Manifest V3</span>
+    </div>
+  </div>
+
+  <!-- Right: Extension Mockup -->
+  <div class="hero-right">
+    <div class="ext-wrap">
+      <div class="ext-header">
+        <div class="wdots">
+          <span style="background:#FF5F57"></span>
+          <span style="background:#FEBC2E"></span>
+          <span style="background:#28C840"></span>
+        </div>
+        <img src="icons/icon48.png" alt="" />
+        <div>
+          <div class="ext-header-title">Live Range Scraper</div>
+        </div>
+        <div class="ext-header-sub">v1.2.0</div>
+      </div>
+
+      <div class="ext-inner">
+        <!-- Recording status -->
+        <div class="ext-rec-bar">
+          <div class="ext-rec-left">
+            <div class="rec-pulse"></div>
+            <span class="rec-label">RECORDING</span>
+          </div>
+          <span class="rec-count">Total: <b id="ext-count">1,200</b></span>
+        </div>
+
+        <!-- Controls -->
+        <div class="ext-ctrl-row">
+          <button class="ec-btn ec-start" aria-label="Start recording">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>
+            Start
+          </button>
+          <button class="ec-btn ec-stop" aria-label="Stop recording">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            Stop
+          </button>
+          <button class="ec-btn ec-clear" aria-label="Clear data">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+            Clear
+          </button>
+        </div>
+
+        <!-- Search -->
+        <div class="ext-search-bar">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span>Search phone, sender, content…</span>
+        </div>
+
+        <!-- Live messages feed -->
+        <div class="ext-msgs-label">
+          <span>Messages</span>
+          <span id="ext-feed-count">Showing 3 of <span style="color:var(--orange)">1,200</span></span>
+        </div>
+        <div id="ext-feed"></div>
+
+        <!-- Export bar -->
+        <div class="ext-export-bar">
+          <button class="ex-btn">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export JSON
+          </button>
+          <button class="ex-btn">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="ext-foot">Developed with love 🧡 by <span>OZYREN</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  FEATURES                                             -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="features" aria-label="Features">
+  <div class="sec-inner">
+    <div class="reveal">
+      <div class="sec-eyebrow">Core Features</div>
+      <h2 class="sec-title">EVERYTHING<br>YOU NEED</h2>
+      <p class="sec-sub">One lightweight extension. Full control over real-time SMS data capture on ivasms.com.</p>
+    </div>
+
+    <div class="feat-grid stagger">
+
+      <div class="feat-card">
+        <div class="feat-num">01 / 06</div>
+        <div class="feat-ico">⚡</div>
+        <div class="feat-title">Zero-Delay Capture</div>
+        <p class="feat-desc">Intercepts Fetch &amp; XHR calls the instant they fire. No polling intervals — data is captured the exact millisecond it arrives from the ivasms.com <code>/test_sms</code> endpoint.</p>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-num">02 / 06</div>
+        <div class="feat-ico">🔴</div>
+        <div class="feat-title">Start / Stop Recording</div>
+        <p class="feat-desc">Full manual control via the popup UI. Instant kill-switch via Chrome storage listener — no message round-trips required. The content script reacts immediately on state change.</p>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-num">03 / 06</div>
+        <div class="feat-ico">🔍</div>
+        <div class="feat-title">Advanced Search</div>
+        <p class="feat-desc">Filter captured messages in real-time as you type. Optional <strong>case-sensitive</strong> matching and full <strong>regex support</strong> for advanced pattern hunting across phone numbers, senders, and content.</p>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-num">04 / 06</div>
+        <div class="feat-ico">👁️</div>
+        <div class="feat-title">MutationObserver DOM Watch</div>
+        <p class="feat-desc">Fallback DOM monitoring catches any SMS rows that appear via DOM manipulation rather than network requests — ensuring complete coverage with zero missed messages.</p>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-num">05 / 06</div>
+        <div class="feat-ico">💾</div>
+        <div class="feat-title">Export to JSON</div>
+        <p class="feat-desc">Download your entire captured dataset as a structured JSON file with a single click. Stores up to 10,000 messages in Chrome's local storage — configurable in source.</p>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-num">06 / 06</div>
+        <div class="feat-ico">🔐</div>
+        <div class="feat-title">100% Private</div>
+        <p class="feat-desc">All data stays in your browser. No external server communication whatsoever. Restricted to the <code>ivasms.com</code> domain only. You own your data.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  STATS                                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section stats-bg" style="padding:80px var(--px)">
+  <div class="sec-inner">
+    <div class="stats-row stagger">
+      <div class="s-box">
+        <div class="s-num"><span data-count="10" data-s="K+" style="color:var(--orange)">0K+</span></div>
+        <div class="s-lbl">Messages Storable</div>
+      </div>
+      <div class="s-box">
+        <div class="s-num"><span data-count="3" data-s="x" style="color:var(--orange)">0x</span></div>
+        <div class="s-lbl">Capture Methods</div>
+      </div>
+      <div class="s-box">
+        <div class="s-num"><span data-count="0" data-s="ms" style="color:var(--orange)">0ms</span></div>
+        <div class="s-lbl">Capture Delay</div>
+      </div>
+      <div class="s-box">
+        <div class="s-num"><span data-count="100" data-s="%" style="color:var(--orange)">0%</span></div>
+        <div class="s-lbl">Local — No Cloud</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  HOW IT WORKS                                         -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section how-bg" id="how-it-works" aria-label="How it works">
+  <div class="sec-inner">
+    <div class="reveal">
+      <div class="sec-eyebrow">Under the Hood</div>
+      <h2 class="sec-title">HOW IT<br>WORKS</h2>
+      <p class="sec-sub">Three parallel capture layers guarantee nothing slips through, from the first network request to the final DOM mutation.</p>
+    </div>
+
+    <div class="how-grid">
+
+      <div class="how-steps reveal" data-d="0.1">
+        <div class="how-step">
+          <div class="step-num">01</div>
+          <div>
+            <div class="step-t">Navigate to ivasms.com</div>
+            <p class="step-d">Open the portal live page at <code>ivasms.com/portal/live/</code>. The content script activates automatically on page load — no manual injection needed.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">02</div>
+          <div>
+            <div class="step-t">Click Start Recording</div>
+            <p class="step-d">Click the extension icon and hit "Start Recording". An instant storage signal fires — the content script starts all three capture layers simultaneously with no round-trip delay.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">03</div>
+          <div>
+            <div class="step-t">Data Captured Instantly</div>
+            <p class="step-d">The Fetch interceptor hooks the <code>/portal/live/test_sms</code> endpoint. XHR monitoring catches fallback requests. MutationObserver watches for new DOM rows — all fire at the exact moment data arrives.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">04</div>
+          <div>
+            <div class="step-t">Search, Filter &amp; Export</div>
+            <p class="step-d">Use the live search to filter by phone number, sender, or message content — with optional regex. When you're done, export everything to JSON with one click.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="how-terminal reveal" data-d="0.2">
+        <div class="t-bar">
+          <div class="t-d" style="background:#FF5F57"></div>
+          <div class="t-d" style="background:#FEBC2E"></div>
+          <div class="t-d" style="background:#28C840"></div>
+          <span class="t-tab">live-range-scraper — console</span>
+        </div>
+        <div class="t-body">
+          <pre id="term-type" style="font-family:inherit;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.9;"></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  INSTALL                                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="install" aria-label="Installation guide">
+  <div class="sec-inner">
+    <div class="reveal">
+      <div class="sec-eyebrow">Installation</div>
+      <h2 class="sec-title">UP IN<br>MINUTES</h2>
+      <p class="sec-sub">No Chrome Web Store listing required. Load the extension directly in Developer Mode — takes under two minutes.</p>
+    </div>
+
+    <div class="install-grid stagger" style="margin-top:56px">
+
+      <div class="i-card">
+        <div class="i-step-num">1</div>
+        <div class="i-emoji">📦</div>
+        <div class="i-title">Download ZIP</div>
+        <p class="i-desc">Click the download button to get the extension package. Extract the ZIP to any folder on your computer.</p>
+      </div>
+
+      <div class="i-card">
+        <div class="i-step-num">2</div>
+        <div class="i-emoji">🧩</div>
+        <div class="i-title">Open Extensions</div>
+        <p class="i-desc">In Chrome, navigate to <code>chrome://extensions/</code> and toggle on <strong>Developer mode</strong> in the top-right corner.</p>
+      </div>
+
+      <div class="i-card">
+        <div class="i-step-num">3</div>
+        <div class="i-emoji">📂</div>
+        <div class="i-title">Load Unpacked</div>
+        <p class="i-desc">Click <strong>"Load unpacked"</strong> and select the extracted folder. The Live Range Scraper icon will appear in your Chrome toolbar immediately.</p>
+      </div>
+
+      <div class="i-card">
+        <div class="i-step-num">4</div>
+        <div class="i-emoji">🚀</div>
+        <div class="i-title">Start Capturing</div>
+        <p class="i-desc">Visit <code>ivasms.com/portal/live/</code>, click the extension icon, hit <strong>Start Recording</strong> and watch data stream in live.</p>
+      </div>
+
+    </div>
+
+    <div class="dl-cta reveal" data-d="0.15">
+      <div>
+        <div class="dl-cta-title">DOWNLOAD<br><span>FREE.</span></div>
+        <p class="dl-cta-sub">No sign-up. No invite codes. No subscriptions. Just download and run.</p>
+      </div>
+      <a href="live-range-scraper.zip" download class="btn-dl" style="font-size:13px;padding:16px 36px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download live-range-scraper.zip
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  CHANGELOG                                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section how-bg" style="padding:80px var(--px)" aria-label="Changelog">
+  <div class="sec-inner">
+    <div class="reveal">
+      <div class="sec-eyebrow">Changelog</div>
+      <h2 class="sec-title" style="font-size:clamp(34px,4vw,54px)">WHAT'S NEW</h2>
+    </div>
+
+    <div style="margin-top:40px; display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:14px; overflow:hidden;">
+
+      <div style="padding:24px 28px; border-bottom:1px solid var(--border); background:var(--surface); display:flex; gap:18px; align-items:flex-start;" class="reveal" data-d="0.05">
+        <span class="badge badge-orange" style="flex-shrink:0;margin-top:2px">v1.2.0</span>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#fff;margin-bottom:6px">URL Fix + Debug Mode</div>
+          <p style="font-size:13px;color:var(--sub);font-weight:300;line-height:1.6">Fixed endpoint URL — now correctly monitors <code>/portal/live/test_sms</code>. Added detailed debug logging. Shows all network requests for troubleshooting. Logs target URL detection events.</p>
+        </div>
+      </div>
+
+      <div style="padding:24px 28px; border-bottom:1px solid var(--border); display:flex; gap:18px; align-items:flex-start;" class="reveal" data-d="0.1">
+        <span class="badge badge-gray" style="flex-shrink:0;margin-top:2px">v1.1.0</span>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#fff;margin-bottom:6px">Performance Update — Instant Capture</div>
+          <p style="font-size:13px;color:var(--sub);font-weight:300;line-height:1.6">Removed all polling delays — data now captured in true real-time. Added MutationObserver for immediate DOM-based capture. Optimised fetch/XHR interception for zero-delay processing. Real-time notification counter.</p>
+        </div>
+      </div>
+
+      <div style="padding:24px 28px; display:flex; gap:18px; align-items:flex-start;" class="reveal" data-d="0.15">
+        <span class="badge badge-gray" style="flex-shrink:0;margin-top:2px">v1.0.0</span>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#fff;margin-bottom:6px">Initial Release</div>
+          <p style="font-size:13px;color:var(--sub);font-weight:300;line-height:1.6">Start/Stop recording. Search with regex support. Export to JSON. Real-time message capture. Local Chrome storage management.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  FOOTER                                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<footer>
+  <div class="ft-inner">
+    <div class="ft-brand">
+      <div class="logo-row">
+        <img src="icons/icon48.png" alt="" />
+        Live<span>Range</span>Scraper
+      </div>
+      <p>Real-time SMS data capture for ivasms.com. Free, private, and open to everyone.</p>
+    </div>
+
+    <div class="ft-col">
+      <h5>Extension</h5>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How it Works</a></li>
+        <li><a href="#install">Installation Guide</a></li>
+        <li><a href="live-range-scraper.zip" download>Download ZIP</a></li>
+      </ul>
+    </div>
+
+    <div class="ft-col">
+      <h5>Technical</h5>
+      <ul>
+        <li><a href="#">Manifest V3</a></li>
+        <li><a href="#">Chrome Storage API</a></li>
+        <li><a href="#">Fetch Interception</a></li>
+        <li><a href="#">MutationObserver</a></li>
+      </ul>
+    </div>
+
+    <div class="ft-col">
+      <h5>Support</h5>
+      <ul>
+        <li><a href="#">Troubleshooting</a></li>
+        <li><a href="#">Debugging Guide</a></li>
+        <li><a href="#">Permissions Info</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ft-bottom">
+    <span class="ft-copy">Made with 🧡 by <span>OZYREN</span> · Free for everyone · No invite required</span>
+    <span class="ft-ver"><span>●</span> v1.2.0 Latest</span>
+  </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
